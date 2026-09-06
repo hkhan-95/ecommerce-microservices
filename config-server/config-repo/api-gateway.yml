@@ -1,0 +1,23 @@
+server:
+  port: 8222
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: policy-service
+              uri: lb://policy-service
+              predicates:
+                - Path=/api/v1/policies/**
+
+            - id: claims-service
+              uri: lb://claims-service
+              predicates:
+                - Path=/api/v1/claims/**
