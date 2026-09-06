@@ -1,0 +1,33 @@
+# Maven build output
+**/target/
+
+# IntelliJ
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE / temp files
+*.swp
+*.swo
+*~
+
+# Java
+*.class
+
+# Local runtime files
+*.pid
