@@ -1,0 +1,21 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: activity-service-v2
+      auto-offset-reset: latest
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
+      properties:
+        "[spring.json.trusted.packages]": "com.insurance.activityservice.event"
+        "[spring.json.value.default.type]": "com.insurance.activityservice.event.ClaimCreatedEvent"
+        "[spring.json.use.type.headers]": false
+
+app:
+  dynamodb:
+    endpoint: http://localhost:8000
+    region: us-east-1
+    table-name: claim-activity
