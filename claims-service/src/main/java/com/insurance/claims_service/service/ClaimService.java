@@ -6,14 +6,17 @@ import com.insurance.claims_service.dto.CreateClaimRequest;
 import com.insurance.claims_service.dto.PolicyResponse;
 import com.insurance.claims_service.entity.Claim;
 import com.insurance.claims_service.entity.ClaimStatus;
+import com.insurance.claims_service.event.ClaimCreatedEvent;
 import com.insurance.claims_service.exception.PolicyInactiveException;
 import com.insurance.claims_service.exception.PolicyNotFoundException;
 import com.insurance.claims_service.exception.PolicyServiceUnavailableException;
 import com.insurance.claims_service.mapper.ClaimMapper;
+import com.insurance.claims_service.producer.ClaimEventProducer;
 import com.insurance.claims_service.repository.ClaimRepository;
 import feign.FeignException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,13 +25,16 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final PolicyClient policyClient;
+    private final ClaimEventProducer claimEventProducer;
 
     public ClaimService(
             ClaimRepository claimRepository,
-            PolicyClient policyClient
+            PolicyClient policyClient,
+            ClaimEventProducer claimEventProducer
     ) {
         this.claimRepository = claimRepository;
         this.policyClient = policyClient;
+        this.claimEventProducer = claimEventProducer;
     }
 
     public ClaimResponse createClaim(CreateClaimRequest request) {
@@ -50,6 +56,23 @@ public class ClaimService {
         Claim claim = ClaimMapper.toEntity(request);
         claim.setStatus(ClaimStatus.SUBMITTED);
         Claim savedClaim = claimRepository.save(claim);
+
+        ClaimCreatedEvent event = new ClaimCreatedEvent(
+                UUID.randomUUID(),
+                "CLAIM_CREATED",
+                savedClaim.getId(),
+                savedClaim.getPolicyId(),
+                savedClaim.getCustomerId(),
+                savedClaim.getClaimType().name(),
+                savedClaim.getAmountRequested(),
+                LocalDateTime.now()
+        );
+
+        claimEventProducer.publishClaimCreated(
+                savedClaim.getId().toString(),
+                event
+        );
+
         return ClaimMapper.toResponse(savedClaim);
     }
 
