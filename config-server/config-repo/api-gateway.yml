@@ -12,12 +12,12 @@ spring:
       server:
         webflux:
           routes:
-            - id: policy-service
-              uri: lb://policy-service
+            - id: product-service
+              uri: lb://product-service
               predicates:
-                - Path=/api/v1/policies/**
+                - Path=/api/v1/products/**
 
-            - id: claims-service
-              uri: lb://claims-service
+            - id: order-service
+              uri: lb://order-service
               predicates:
-                - Path=/api/v1/claims/**
+                - Path=/api/v1/orders/**
