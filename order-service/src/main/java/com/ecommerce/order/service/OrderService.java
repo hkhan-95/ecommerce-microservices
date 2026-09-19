@@ -39,7 +39,7 @@ public class OrderService {
         this.orderEventProducer = orderEventProducer;
     }
 
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request, UUID customerId) {
 
         ProductResponse product;
 
@@ -58,6 +58,7 @@ public class OrderService {
         Order order = OrderMapper.toEntity(request);
         order.setTotalAmount(product.price());
         order.setStatus(OrderStatus.PLACED);
+        order.setCustomerId(customerId);
         Order savedOrder = orderRepository.save(order);
 
         OrderCreatedEvent event = new OrderCreatedEvent(
@@ -86,6 +87,14 @@ public class OrderService {
                 );
 
         return OrderMapper.toResponse(order);
+    }
+
+    public List<OrderResponse> getOrdersByCustomerId(UUID customerId) {
+
+        return orderRepository.findByCustomerId(customerId)
+                .stream()
+                .map(order -> OrderMapper.toResponse(order))
+                .toList();
     }
 
     public List<OrderResponse> getAllOrders() {

@@ -12,7 +12,7 @@ public class OrderMapper {
         Order order = new Order();
 
         order.setProductId(request.productId());
-        order.setCustomerId(request.customerId());
+        //order.setCustomerId(request.customerId());
         order.setOrderNotes(request.orderNotes());
 
         return order;

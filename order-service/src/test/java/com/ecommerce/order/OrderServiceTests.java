@@ -37,13 +37,27 @@ class OrderServiceTests {
 	void createsPlacedOrderUsingProductPrice() {
 		UUID productId = UUID.randomUUID();
 		UUID customerId = UUID.randomUUID();
+
 		BigDecimal productPrice = new BigDecimal("149.99");
-		ProductClient productClient = id -> product(productId, productPrice, ProductStatus.AVAILABLE);
-		RecordingOrderEventProducer eventProducer = new RecordingOrderEventProducer();
-		OrderService orderService = new OrderService(orderRepository(), productClient, eventProducer);
+
+		ProductClient productClient =
+				id -> product(productId, productPrice, ProductStatus.AVAILABLE);
+
+		RecordingOrderEventProducer eventProducer =
+				new RecordingOrderEventProducer();
+
+		OrderService orderService = new OrderService(
+				orderRepository(),
+				productClient,
+				eventProducer
+		);
 
 		OrderResponse response = orderService.createOrder(
-				new CreateOrderRequest(productId, customerId, "Leave at the front desk")
+				new CreateOrderRequest(
+						productId,
+						"Leave at the front desk"
+				),
+				customerId
 		);
 
 		assertNotNull(response.id());
@@ -52,32 +66,65 @@ class OrderServiceTests {
 		assertEquals("Leave at the front desk", response.orderNotes());
 		assertEquals(productPrice, response.totalAmount());
 		assertEquals(OrderStatus.PLACED, response.status());
+
 		assertNotNull(eventProducer.publishedEvent);
-		assertEquals("ORDER_CREATED", eventProducer.publishedEvent.eventType());
-		assertEquals(response.id(), eventProducer.publishedEvent.orderId());
-		assertEquals(productPrice, eventProducer.publishedEvent.totalAmount());
+		assertEquals(
+				"ORDER_CREATED",
+				eventProducer.publishedEvent.eventType()
+		);
+		assertEquals(
+				response.id(),
+				eventProducer.publishedEvent.orderId()
+		);
+		assertEquals(
+				productPrice,
+				eventProducer.publishedEvent.totalAmount()
+		);
 	}
 
 	@Test
 	void rejectsProductsThatAreNotAvailable() {
-		for (ProductStatus status : List.of(ProductStatus.OUT_OF_STOCK, ProductStatus.DISCONTINUED)) {
+
+		for (ProductStatus status :
+				List.of(
+						ProductStatus.OUT_OF_STOCK,
+						ProductStatus.DISCONTINUED
+				)) {
+
 			UUID productId = UUID.randomUUID();
-			ProductClient productClient = id -> product(productId, new BigDecimal("49.99"), status);
+			UUID customerId = UUID.randomUUID();
+
+			ProductClient productClient =
+					id -> product(
+							productId,
+							new BigDecimal("49.99"),
+							status
+					);
+
 			OrderService orderService = new OrderService(
 					orderRepository(),
 					productClient,
 					new RecordingOrderEventProducer()
 			);
 
-			ProductUnavailableException exception = assertThrows(
-					ProductUnavailableException.class,
-					() -> orderService.createOrder(
-							new CreateOrderRequest(productId, UUID.randomUUID(), "No special instructions")
-					)
-			);
+			ProductUnavailableException exception =
+					assertThrows(
+							ProductUnavailableException.class,
+							() -> orderService.createOrder(
+									new CreateOrderRequest(
+											productId,
+											"No special instructions"
+									),
+									customerId
+							)
+					);
 
 			assertEquals(
-					"Product is not available: " + productId + " (status: " + status + ")",
+					"Product is not available: "
+							+ productId
+							+ " (status: "
+							+ status
+							+ ")",
 					exception.getMessage()
 			);
 		}

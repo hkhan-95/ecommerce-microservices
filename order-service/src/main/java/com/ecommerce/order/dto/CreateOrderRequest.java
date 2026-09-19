@@ -9,9 +9,6 @@ public record CreateOrderRequest(
         @NotNull
         UUID productId,
 
-        @NotNull
-        UUID customerId,
-
         @NotBlank
         String orderNotes
 ) {
